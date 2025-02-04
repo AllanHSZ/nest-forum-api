@@ -3,23 +3,24 @@ import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
-import { UserService } from 'src/user/user.service';
+import { PrismaService } from 'src/database/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
+    private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
 
-  async signIn(params: Prisma.UserCreateInput): Promise<{
+  async signIn({ email, password }: Prisma.UserCreateInput): Promise<{
     access_token: string;
   }> {
-    const user = await this.userService.get({ email: params.email });
+    const user = await this.prismaService.user.findUnique({
+      where: { email: email },
+    });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const passwordMatch = await bcrypt.compare(params.password, user.password);
+    const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) throw new UnauthorizedException('Invalid credentials');
 
     const payload = { sub: user.id };
