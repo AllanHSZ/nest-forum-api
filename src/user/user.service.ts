@@ -3,12 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from 'src/database/prisma.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './dto/user.dto';
-
-type UpdateUserParams = {
-  where: Prisma.UserWhereUniqueInput;
-  data: Prisma.UserUpdateInput;
-};
 
 @Injectable()
 export class UserService {
@@ -30,7 +27,7 @@ export class UserService {
     });
   }
 
-  async create(user: Prisma.UserCreateInput): Promise<User | null> {
+  async create(user: CreateUserDto): Promise<User | null> {
     const password = await bcrypt.hash(user.password, 10);
     return this.prisma.user.create({
       data: { ...user, password },
@@ -45,11 +42,10 @@ export class UserService {
     });
   }
 
-  async update(params: UpdateUserParams): Promise<User> {
-    const { data, where } = params;
+  async update(id: number, user: UpdateUserDto): Promise<User> {
     return this.prisma.user.update({
-      data,
-      where,
+      data: user,
+      where: { id },
       select: {
         id: true,
         email: true,
